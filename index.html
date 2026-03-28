@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doctor Dark: Safe House</title>
+    <title>Doctor Dark: Ultimate Survival</title>
     <style>
         * { box-sizing: border-box; touch-action: none; user-select: none; }
-        body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; overflow: hidden; color: #fff; }
+        body { margin: 0; background: #000; font-family: 'Arial', sans-serif; overflow: hidden; color: #fff; }
         #ui { position: absolute; top: 10px; width: 100%; text-align: center; z-index: 20; pointer-events: none; }
         .bar-bg { width: 220px; height: 18px; background: #222; border: 2px solid #0f0; border-radius: 10px; margin: 5px auto; overflow: hidden; }
         #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #f00, #ff4500); transition: 0.2s; }
@@ -20,7 +20,7 @@
 </head>
 <body>
     <div id="ui">
-        <div class="score">DR DARK | SCORE: <span id="sc">0</span></div>
+        <div class="score">DOCTOR DARK | SCORE: <span id="sc">0</span></div>
         <div class="bar-bg"><div id="hp"></div></div>
     </div>
     <canvas id="c"></canvas>
@@ -34,6 +34,60 @@
     <script>
         const c=document.getElementById('c'), x=c.getContext('2d');
         c.width=window.innerWidth*2; c.height=(window.innerHeight*0.65)*2;
+        let s=0, h=100, live=true, b=null;
+        let p={x:c.width/2, y:c.height/2}, w={x:50, y:50}, f={x:c.width-250, y:c.height-250};
+        let coin={x:400, y:400}, house={x:200, y:200}, car={x:c.width-300, y:200, drive:false};
+        let t=Array.from({length:10},()=>({x:Math.random()*c.width, y:Math.random()*c.height, sz:140}));
+
+        function draw() {
+            if(!live) return;
+            x.fillStyle="#010801"; x.fillRect(0,0,c.width,c.height);
+            let grad = x.createRadialGradient(p.x, p.y, 50, p.x, p.y, 650);
+            grad.addColorStop(0, 'rgba(0,50,0,0.3)'); grad.addColorStop(1, 'black');
+            x.fillStyle = grad; x.fillRect(0,0,c.width,c.height);
+
+            t.forEach(i=>{ x.font=i.sz+"px serif"; x.fillText("🌲",i.x,i.y); });
+            x.font="160px serif"; x.fillText("🏠",house.x,house.y);
+            x.font="120px serif"; x.fillText("🔥",f.x,f.y);
+            x.font="90px serif"; x.fillText("💰",coin.x,coin.y);
+            if(!car.drive) { x.font="110px serif"; x.fillText("🏎️",car.x,car.y); }
+
+            let inHouse = Math.sqrt((p.x-house.x-50)**2+(p.y-house.y+50)**2)<120;
+            let nearFire = Math.sqrt((p.x-f.x)**2+(p.y-f.y)**2)<180;
+            if(!car.drive && Math.sqrt((p.x-car.x)**2+(p.y-car.y)**2)<90) car.drive=true;
+
+            let dx=p.x-w.x, dy=p.y-w.y, d=Math.sqrt(dx*dx+dy*dy);
+            if(!inHouse) { w.x+=dx/55; w.y+=dy/55; }
+            x.font="110px serif"; x.fillText("🐺",w.x,w.y);
+            x.fillText(car.drive ? "🏎️" : "🏃‍♂️",p.x,p.y);
+
+            if(b) {
+                b.x+=b.vx; b.y+=b.vy; x.font="50px serif"; x.fillText("⏺️",b.x,b.y);
+                if(Math.sqrt((b.x-w.x)**2+(b.y-w.y)**2)<90) { s+=1000; w={x:Math.random()*c.width, y:0}; b=null; }
+                else if(b.x<0||b.x>c.width||b.y<0||b.y>c.height) b=null;
+            }
+            if(Math.sqrt((p.x-coin.x)**2+(p.y-coin.y)**2)<90) { s+=2000; coin={x:Math.random()*c.width, y:Math.random()*c.height}; }
+
+            if(d<90 && !inHouse && !nearFire && !car.drive) h-=1.5;
+            if(inHouse && h<100) h+=0.4;
+            document.getElementById('hp').style.width=h+"%";
+            if(h<=0) { live=false; alert("GAME OVER! DR DARK SCORE: "+Math.floor(s/10)); location.reload(); }
+            s++; document.getElementById('sc').innerText=Math.floor(s/10);
+            requestAnimationFrame(draw);
+        }
+        function m(v) {
+            let st = car.drive ? 160 : 80;
+            if(v=='u' && p.y>100) p.y-=st; if(v=='d' && p.y<c.height-100) p.y+=st;
+            if(v=='l' && p.x>100) p.x-=st; if(v=='r' && p.x<c.width-100) p.x+=st;
+        }
+        function shoot() {
+            if(car.drive) { car.drive=false; car.x=p.x+120; car.y=p.y; return; }
+            if(!b) b={x:p.x, y:p.y, vx:(w.x-p.x)/8, vy:(w.y-p.y)/8};
+        }
+        draw();
+    </script>
+</body>
+</html>
         let s=0, h=100, live=true, b=null, coin={x:400, y:400}, house={x:150, y:150};
         let p={x:c.width/2, y:c.height/2}, w={x:50, y:50}, f={x:c.width/1.3, y:c.height/1.3};
         let t=Array.from({length:8},()=>({x:Math.random()*c.width, y:Math.random()*c.height, sz:140}));
