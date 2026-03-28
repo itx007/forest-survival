@@ -3,65 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doctor Dark: Forest Survival PRO</title>
+    <title>Doctor Dark: Wolf Hunt</title>
     <style>
         * { box-sizing: border-box; touch-action: none; user-select: none; }
         body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; overflow: hidden; color: #fff; }
-        #game-container { position: relative; width: 100vw; height: 100vh; background: radial-gradient(circle, #0a2b0a 0%, #000 100%); }
-        canvas { display: block; width: 100%; height: 70%; border-bottom: 2px solid #0f0; box-shadow: 0 5px 20px rgba(0,255,0,0.3); }
-        #overlay { position: absolute; top: 15px; width: 100%; text-align: center; pointer-events: none; }
-        .stat-box { background: rgba(0,0,0,0.7); border: 1px solid #0f0; padding: 10px 20px; border-radius: 10px; display: inline-block; box-shadow: 0 0 15px #0f0; }
-        .score-text { color: #0f0; font-weight: bold; font-size: 1.2rem; letter-spacing: 2px; }
-        .controls { position: absolute; bottom: 5%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; align-items: center; gap: 15px; padding: 0 20px; }
-        .btn { width: 80px; height: 80px; background: rgba(0,255,0,0.1); border: 2px solid #0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #0f0; box-shadow: 0 0 20px rgba(0,255,0,0.4); }
-        .btn:active { transform: scale(0.9); background: rgba(0,255,0,0.3); }
+        #ui { position: absolute; top: 10px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 5px; pointer-events: none; }
+        .bar-bg { width: 200px; height: 15px; background: #333; border: 2px solid #0f0; border-radius: 10px; overflow: hidden; }
+        #hp { width: 100%; height: 100%; background: #f00; transition: 0.3s; }
+        .score { color: #0f0; font-weight: bold; font-size: 1.2rem; text-shadow: 0 0 10px #0f0; }
+        canvas { display: block; width: 100%; height: 70vh; background: #051405; border-bottom: 2px solid #0f0; }
+        .controls { position: absolute; bottom: 5%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; gap: 15px; padding: 0 20px; }
+        .btn { width: 75px; height: 75px; background: rgba(0,255,0,0.1); border: 2px solid #0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #0f0; box-shadow: 0 0 15px rgba(0,255,0,0.3); }
         .up { grid-column: 2; } .left { grid-column: 1; } .down { grid-column: 2; } .right { grid-column: 3; }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="overlay">
-            <div class="stat-box">
-                <div class="score-text">DR DARK SURVIVAL | SCORE: <span id="score">0</span></div>
-            </div>
-        </div>
-        <canvas id="gameCanvas"></canvas>
-        <div class="controls">
-            <div class="btn up" id="up">↑</div>
-            <div class="btn left" id="left">←</div>
-            <div class="btn down" id="down">↓</div>
-            <div class="btn right" id="right">→</div>
-        </div>
+    <div id="ui">
+        <div class="score">SCORE: <span id="sc">0</span></div>
+        <div class="bar-bg"><div id="hp"></div></div>
+    </div>
+    <canvas id="c"></canvas>
+    <div class="controls">
+        <div class="btn up" ontouchstart="m('u')">↑</div>
+        <div class="btn left" ontouchstart="m('l')">←</div>
+        <div class="btn down" ontouchstart="m('d')">↓</div>
+        <div class="btn right" ontouchstart="m('r')">→</div>
     </div>
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth * 2;
-        canvas.height = (window.innerHeight * 0.7) * 2;
-        let score = 0;
-        let player = { x: canvas.width/2, y: canvas.height/2, size: 80 };
-        let trees = [];
-        for(let i=0; i<12; i++) {
-            trees.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: 100 + Math.random()*100 });
-        }
+        const c=document.getElementById('c'), x=c.getContext('2d');
+        c.width=window.innerWidth*2; c.height=(window.innerHeight*0.7)*2;
+        let s=0, h=100, live=true;
+        let p={x:c.width/2, y:c.height/2}, w={x:0, y:0};
+        let t=Array.from({length:10},()=>({x:Math.random()*c.width, y:Math.random()*c.height, size:120}));
+
         function draw() {
-            ctx.fillStyle = "#051405";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            // Draw Cinematic Grass/Fog
-            ctx.fillStyle = "rgba(0, 50, 0, 0.2)";
-            for(let i=0; i<5; i++) ctx.fillRect(0, i*100, canvas.width, 50);
-            // Draw High-Quality Trees
-            trees.forEach(t => {
-                ctx.font = t.s + "px serif";
-                ctx.shadowBlur = 15; ctx.shadowColor = "#000";
-                ctx.fillText("🌲", t.x, t.y);
-            });
-            // Draw Player (Doctor Dark)
-            ctx.font = "100px serif";
-            ctx.shadowBlur = 20; ctx.shadowColor = "#0f0";
-            ctx.fillText("🏃‍♂️", player.x, player.y);
+            if(!live) return;
+            x.fillStyle="#051405"; x.fillRect(0,0,c.width,c.height);
+            t.forEach(i=>{ x.font=i.size+"px serif"; x.fillText("🌲",i.x,i.y); });
+            // Enemy Wolf Logic
+            let dx=p.x-w.x, dy=p.y-w.y, d=Math.sqrt(dx*dx+dy*dy);
+            w.x+=dx/40; w.y+=dy/40;
+            x.font="100px serif"; x.fillText("🐺",w.x,w.y);
+            x.fillText("🏃‍♂️",p.x,p.y);
+            if(d<60) { h-=1; document.getElementById('hp').style.width=h+"%"; }
+            if(h<=0) { live=false; alert("GAME OVER! Final Score: "+s); location.reload(); }
             requestAnimationFrame(draw);
         }
+        function m(v) {
+            if(v=='u') p.y-=50; if(v=='d') p.y+=50; if(v=='l') p.x-=50; if(v=='r') p.x+=50;
+            s+=10; document.getElementById('sc').innerText=s;
+        }
+        draw();
+    </script>
+</body>
+</html>
         function move(dir) {
             const step = 40;
             if(dir === 'u' && player.y > 100) player.y -= step;
