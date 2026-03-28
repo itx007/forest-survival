@@ -3,37 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dr Dark: Final Survival</title>
+    <title>Dr Dark: Extreme Survival</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
         * { box-sizing: border-box; touch-action: none; user-select: none; }
-        body { margin: 0; background: #050505; font-family: 'Orbitron', sans-serif; overflow: hidden; color: #fff; }
-        
-        #ui { position: absolute; top: 0; width: 100%; padding: 15px; background: linear-gradient(to bottom, rgba(0,255,0,0.1), transparent); z-index: 20; pointer-events: none; border-bottom: 1px solid rgba(0,255,0,0.2); }
-        .branding { font-size: 1.2rem; letter-spacing: 3px; color: #0f0; text-shadow: 0 0 10px #0f0; margin-bottom: 5px; }
-        .score-box { font-size: 1.5rem; color: #fff; text-shadow: 0 0 5px #0f0; }
-        
-        .health-container { width: 250px; height: 12px; background: #111; border: 1px solid #0f0; border-radius: 6px; margin: 10px auto; overflow: hidden; box-shadow: 0 0 10px rgba(0,255,0,0.3); }
-        #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #ff0000, #00ff00); transition: 0.3s ease; }
-        
-        canvas { display: block; width: 100%; height: 60vh; background: #000; border-bottom: 2px solid #0f0; }
-        
-        .controls { position: absolute; bottom: 3%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; align-items: center; gap: 15px; padding: 0 20px; }
-        .btn { width: 70px; height: 70px; background: rgba(0,255,0,0.05); border: 1.5px solid #0f0; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #0f0; box-shadow: inset 0 0 10px rgba(0,255,0,0.2); transition: 0.1s; }
-        .btn:active { background: rgba(0,255,0,0.2); transform: scale(0.95); }
-        .shoot-btn { width: 90px; height: 90px; background: rgba(255,0,0,0.1); border-color: #f00; color: #f00; font-size: 2.2rem; border-radius: 50%; box-shadow: 0 0 20px rgba(255,0,0,0.3); }
-        
-        .up { grid-column: 2; } .left { grid-column: 1; } .down { grid-column: 2; } .right { grid-column: 3; } .shoot { grid-column: 2; margin-top: 10px; }
+        body { margin: 0; background: #000; font-family: 'Orbitron', sans-serif; overflow: hidden; color: #fff; }
+        #ui { position: absolute; top: 0; width: 100%; padding: 10px; z-index: 20; text-align: center; background: rgba(0,0,0,0.6); border-bottom: 1px solid #0f0; }
+        .branding { font-size: 0.9rem; color: #0f0; text-shadow: 0 0 8px #0f0; letter-spacing: 3px; }
+        .score-box { font-size: 1.5rem; margin: 5px 0; color: #fff; }
+        .hb-container { width: 220px; height: 12px; background: #111; border: 1.5px solid #0f0; border-radius: 6px; margin: 5px auto; overflow: hidden; }
+        #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #f00, #0f0); transition: 0.3s; }
+        canvas { display: block; width: 100%; height: 60vh; background: #010501; }
+        .controls { position: absolute; bottom: 3%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; gap: 12px; padding: 0 20px; }
+        .btn { width: 68px; height: 68px; background: rgba(0,255,0,0.08); border: 2px solid #0f0; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #0f0; box-shadow: 0 0 10px rgba(0,255,0,0.2); }
+        .shoot-btn { width: 85px; height: 85px; background: rgba(255,0,0,0.1); border-color: #f00; color: #f00; border-radius: 50%; font-size: 2.2rem; }
+        .up { grid-column: 2; } .left { grid-column: 1; } .down { grid-column: 2; } .right { grid-column: 3; } .shoot { grid-column: 2; }
     </style>
 </head>
 <body>
     <div id="ui">
-        <div class="branding">DOCTOR DARK PRO</div>
-        <div class="score-box">SCORE: <span id="sc">0</span></div>
-        <div class="health-container"><div id="hp"></div></div>
+        <div class="branding">DOCTOR DARK • EXTREME</div>
+        <div class="score-box">SC: <span id="sc">0</span></div>
+        <div class="hb-container"><div id="hp"></div></div>
     </div>
     <canvas id="c"></canvas>
     <div class="controls">
+        <div class="btn up" ontouchstart="m('u')">▲</div>
+        <div class="btn left" ontouchstart="m('l')">◀</div>
+        <div class="btn down" ontouchstart="m('d')">▼</div>
+        <div class="btn right" ontouchstart="m('r')">▶</div>
+        <div class="btn shoot-btn shoot" ontouchstart="shoot()">🔥</div>
+    </div>
+    <script>
+        const c=document.getElementById('c'), x=c.getContext('2d');
+        c.width=window.innerWidth*2; c.height=(window.innerHeight*0.60)*2;
+        let s=0, h=100, live=true, b=null;
+        let p={x:c.width/2, y:c.height/2};
+        let wolves=[{x:100, y:100}]; 
+        let f={x:c.width-300, y:c.height-300}, coin={x:400, y:400}, house={x:200, y:200}, car={x:c.width-400, y:200, drive:false};
+        let med={x:Math.random()*c.width, y:Math.random()*c.height, active:true};
+        let t=Array.from({length:10},()=>({x:Math.random()*c.width, y:Math.random()*c.height, sz:140}));
+
+        function draw() {
+            if(!live) return;
+            x.fillStyle="#000"; x.fillRect(0,0,c.width,c.height);
+            let grad = x.createRadialGradient(p.x, p.y, 60, p.x, p.y, 750);
+            grad.addColorStop(0, 'rgba(0,40,0,0.3)'); grad.addColorStop(1, '#000');
+            x.fillStyle = grad; x.fillRect(0,0,c.width,c.height);
+
+            t.forEach(i=>{ x.font=i.sz+"px serif"; x.fillText("🌲",i.x,i.y); });
+            x.font="160px serif"; x.fillText("🏠",house.x,house.y);
+            x.font="120px serif"; x.fillText("🔥",f.x,f.y);
+            x.font="90px serif"; x.fillText("💰",coin.x,coin.y);
+            if(med.active){ x.font="80px serif"; x.fillText("💊",med.x,med.y); }
+            if(!car.drive) { x.font="110px serif"; x.fillText("🏎️",car.x,car.y); }
+
+            let inH = Math.sqrt((p.x-house.x-50)**2+(p.y-house.y+50)**2)<120;
+            let nearF = Math.sqrt((p.x-f.x)**2+(p.y-f.y)**2)<180;
+            if(!car.drive && Math.sqrt((p.x-car.x)**2+(p.y-car.y)**2)<100) car.drive=true;
+            if(med.active && Math.sqrt((p.x-med.x)**2+(p.y-med.y)**2)<80){ h=Math.min(100, h+30); med.active=false; setTimeout(()=> {med={x:Math.random()*c.width, y:Math.random()*c.height, active:true}}, 10000); }
+
+            if(s > 40000 && wolves.length < 2) wolves.push({x:0, y:c.height});
+
+            wolves.forEach(w => {
+                let dx=p.x-w.x, dy=p.y-w.y, d=Math.sqrt(dx*dx+dy*dy);
+                if(!inH) { w.x+=dx/(65 - (s/12000)); w.y+=dy/(65 - (s/12000)); }
+                x.font="110px serif"; x.fillText("🐺",w.x,w.y);
+                if(d<90 && !inH && !nearF && !car.drive) h-=1.4;
+            });
+
+            x.font="110px serif"; x.fillText(car.drive ? "🏎️" : "🏃‍♂️",p.x,p.y);
+
+            if(b) {
+                b.x+=b.vx; b.y+=b.vy; x.fillStyle="#f00"; x.beginPath(); x.arc(b.x,b.y,15,0,Math.PI*2); x.fill();
+                wolves.forEach((w, i) => {
+                    if(Math.sqrt((b.x-w.x)**2+(b.y-w.y)**2)<90) { s+=2500; wolves[i]={x:Math.random()*c.width, y:0}; b=null; }
+                });
+                if(b && (b.x<0||b.x>c.width||b.y<0||b.y>c.height)) b=null;
+            }
+
+            if(Math.sqrt((p.x-coin.x)**2+(p.y-coin.y)**2)<90) { s+=4000; coin={x:Math.random()*c.width, y:Math.random()*c.height}; }
+            if(inH && h<100) h+=0.3;
+            document.getElementById('hp').style.width=h+"%";
+            
+            if(h<=0) { live=false; alert("GAME OVER! DR DARK FINAL SCORE: "+Math.floor(s/10)); location.reload(); }
+            s++; document.getElementById('sc').innerText=Math.floor(s/10);
+            requestAnimationFrame(draw);
+        }
+
+        function m(v) {
+            let sp = car.drive ? 175 : 85;
+            if(v=='u' && p.y>100) p.y-=sp; if(v=='d' && p.y<c.height-100) p.y+=sp;
+            if(v=='l' && p.x>100) p.x-=sp; if(v=='r' && p.x<c.width-100) p.x+=sp;
+        }
+
+        function shoot() {
+            if(car.drive) { car.drive=false; car.x=p.x+140; car.y=p.y; return; }
+            if(!b) {
+                let t = wolves[0];
+                b={x:p.x, y:p.y, vx:(t.x-p.x)/8, vy:(t.y-p.y)/8};
+            }
+        }
+        draw();
+    </script>
+</body>
+</html>
         <div class="btn up" ontouchstart="m('u')">▲</div>
         <div class="btn left" ontouchstart="m('l')">◀</div>
         <div class="btn down" ontouchstart="m('d')">▼</div>
