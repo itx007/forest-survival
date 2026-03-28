@@ -3,37 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doctor Dark: Ultimate Survival</title>
+    <title>Dr Dark: Final Survival</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
         * { box-sizing: border-box; touch-action: none; user-select: none; }
-        body { margin: 0; background: #000; font-family: 'Arial', sans-serif; overflow: hidden; color: #fff; }
-        #ui { position: absolute; top: 10px; width: 100%; text-align: center; z-index: 20; pointer-events: none; }
-        .bar-bg { width: 220px; height: 18px; background: #222; border: 2px solid #0f0; border-radius: 10px; margin: 5px auto; overflow: hidden; }
-        #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #f00, #ff4500); transition: 0.2s; }
-        .score { color: #0f0; font-weight: bold; font-size: 1.4rem; text-shadow: 0 0 10px #0f0; }
-        canvas { display: block; width: 100%; height: 65vh; background: #010801; border-bottom: 3px solid #0f0; }
-        .controls { position: absolute; bottom: 2%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; gap: 8px; padding: 0 10px; }
-        .btn { width: 65px; height: 65px; background: rgba(0,255,0,0.1); border: 2px solid #0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #0f0; box-shadow: 0 0 15px rgba(0,255,0,0.4); }
-        .shoot-btn { width: 80px; height: 80px; background: rgba(255,0,0,0.2); border-color: #f00; color: #f00; box-shadow: 0 0 20px rgba(255,0,0,0.5); font-size: 2rem; }
+        body { margin: 0; background: #050505; font-family: 'Orbitron', sans-serif; overflow: hidden; color: #fff; }
+        
+        #ui { position: absolute; top: 0; width: 100%; padding: 15px; background: linear-gradient(to bottom, rgba(0,255,0,0.1), transparent); z-index: 20; pointer-events: none; border-bottom: 1px solid rgba(0,255,0,0.2); }
+        .branding { font-size: 1.2rem; letter-spacing: 3px; color: #0f0; text-shadow: 0 0 10px #0f0; margin-bottom: 5px; }
+        .score-box { font-size: 1.5rem; color: #fff; text-shadow: 0 0 5px #0f0; }
+        
+        .health-container { width: 250px; height: 12px; background: #111; border: 1px solid #0f0; border-radius: 6px; margin: 10px auto; overflow: hidden; box-shadow: 0 0 10px rgba(0,255,0,0.3); }
+        #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #ff0000, #00ff00); transition: 0.3s ease; }
+        
+        canvas { display: block; width: 100%; height: 60vh; background: #000; border-bottom: 2px solid #0f0; }
+        
+        .controls { position: absolute; bottom: 3%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; align-items: center; gap: 15px; padding: 0 20px; }
+        .btn { width: 70px; height: 70px; background: rgba(0,255,0,0.05); border: 1.5px solid #0f0; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #0f0; box-shadow: inset 0 0 10px rgba(0,255,0,0.2); transition: 0.1s; }
+        .btn:active { background: rgba(0,255,0,0.2); transform: scale(0.95); }
+        .shoot-btn { width: 90px; height: 90px; background: rgba(255,0,0,0.1); border-color: #f00; color: #f00; font-size: 2.2rem; border-radius: 50%; box-shadow: 0 0 20px rgba(255,0,0,0.3); }
+        
         .up { grid-column: 2; } .left { grid-column: 1; } .down { grid-column: 2; } .right { grid-column: 3; } .shoot { grid-column: 2; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div id="ui">
-        <div class="score">DOCTOR DARK | SCORE: <span id="sc">0</span></div>
-        <div class="bar-bg"><div id="hp"></div></div>
+        <div class="branding">DOCTOR DARK PRO</div>
+        <div class="score-box">SCORE: <span id="sc">0</span></div>
+        <div class="health-container"><div id="hp"></div></div>
     </div>
     <canvas id="c"></canvas>
     <div class="controls">
-        <div class="btn up" ontouchstart="m('u')">↑</div>
-        <div class="btn left" ontouchstart="m('l')">←</div>
-        <div class="btn down" ontouchstart="m('d')">↓</div>
-        <div class="btn right" ontouchstart="m('r')">→</div>
-        <div class="btn shoot-btn shoot" ontouchstart="shoot()">💥</div>
+        <div class="btn up" ontouchstart="m('u')">▲</div>
+        <div class="btn left" ontouchstart="m('l')">◀</div>
+        <div class="btn down" ontouchstart="m('d')">▼</div>
+        <div class="btn right" ontouchstart="m('r')">▶</div>
+        <div class="btn shoot-btn shoot" ontouchstart="shoot()">🔥</div>
     </div>
     <script>
         const c=document.getElementById('c'), x=c.getContext('2d');
-        c.width=window.innerWidth*2; c.height=(window.innerHeight*0.65)*2;
+        c.width=window.innerWidth*2; c.height=(window.innerHeight*0.60)*2;
+        
+        let s=0, h=100, live=true, b=null;
+        let p={x:c.width/2, y:c.height/2}, w={x:100, y:100}, f={x:c.width-300, y:c.height-300};
+        let coin={x:500, y:500}, house={x:250, y:250}, car={x:c.width-400, y:300, drive:false};
+        let trees=Array.from({length:12},()=>({x:Math.random()*c.width, y:Math.random()*c.height, sz:150}));
+
+        function draw() {
+            if(!live) return;
+            x.fillStyle="#000"; x.fillRect(0,0,c.width,c.height);
+            
+            // Pro Flashlight Effect
+            let grad = x.createRadialGradient(p.x, p.y, 60, p.x, p.y, 750);
+            grad.addColorStop(0, 'rgba(0,100,0,0.25)');
+            grad.addColorStop(1, 'rgba(0,0,0,0.95)');
+            x.fillStyle = grad; x.fillRect(0,0,c.width,c.height);
+
+            // Objects
+            trees.forEach(t=>{ x.font=t.sz+"px serif"; x.fillText("🌲",t.x,t.y); });
+            x.font="170px serif"; x.fillText("🏠",house.x,house.y);
+            x.font="130px serif"; x.fillText("🔥",f.x,f.y);
+            x.font="100px serif"; x.fillText("💰",coin.x,coin.y);
+            if(!car.drive) { x.font="120px serif"; x.fillText("🏎️",car.x,car.y); }
+
+            let inHouse = Math.sqrt((p.x-house.x-60)**2+(p.y-house.y+60)**2)<130;
+            let nearFire = Math.sqrt((p.x-f.x)**2+(p.y-f.y)**2)<200;
+            if(!car.drive && Math.sqrt((p.x-car.x)**2+(p.y-car.y)**2)<100) car.drive=true;
+
+            // Wolf Intelligence
+            let dx=p.x-w.x, dy=p.y-w.y, d=Math.sqrt(dx*dx+dy*dy);
+            if(!inHouse) { w.x+=dx/60; w.y+=dy/60; }
+            x.font="120px serif"; x.fillText("🐺",w.x,w.y);
+            x.fillText(car.drive ? "🏎️" : "🏃‍♂️",p.x,p.y);
+
+            // Combat & Score
+            if(b) {
+                b.x+=b.vx; b.y+=b.vy; x.fillStyle="#f00"; x.beginPath(); x.arc(b.x,b.y,15,0,Math.PI*2); x.fill();
+                if(Math.sqrt((b.x-w.x)**2+(b.y-w.y)**2)<100) { s+=2000; w={x:Math.random()*c.width, y:0}; b=null; }
+                else if(b.x<0||b.x>c.width||b.y<0||b.y>c.height) b=null;
+            }
+            if(Math.sqrt((p.x-coin.x)**2+(p.y-coin.y)**2)<100) { s+=5000; coin={x:Math.random()*c.width, y:Math.random()*c.height}; }
+
+            // Health Mechanics
+            if(d<100 && !inHouse && !nearFire && !car.drive) h-=1.8;
+            if(inHouse && h<100) h+=0.5;
+            document.getElementById('hp').style.width=h+"%";
+            
+            if(h<=0) { live=false; alert("MISSION FAILED! DR DARK SCORE: "+Math.floor(s/10)); location.reload(); }
+            s++; document.getElementById('sc').innerText=Math.floor(s/10);
+            requestAnimationFrame(draw);
+        }
+
+        function m(v) {
+            let speed = car.drive ? 180 : 90;
+            if(v=='u' && p.y>100) p.y-=speed; if(v=='d' && p.y<c.height-100) p.y+=speed;
+            if(v=='l' && p.x>100) p.x-=speed; if(v=='r' && p.x<c.width-100) p.x+=speed;
+        }
+
+        function shoot() {
+            if(car.drive) { car.drive=false; car.x=p.x+150; car.y=p.y; return; }
+            if(!b) b={x:p.x, y:p.y, vx:(w.x-p.x)/7, vy:(w.y-p.y)/7};
+        }
+        draw();
+    </script>
+</body>
+</html>
         let s=0, h=100, live=true, b=null;
         let p={x:c.width/2, y:c.height/2}, w={x:50, y:50}, f={x:c.width-250, y:c.height-250};
         let coin={x:400, y:400}, house={x:200, y:200}, car={x:c.width-300, y:200, drive:false};
