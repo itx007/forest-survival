@@ -1,39 +1,49 @@
-
 <!DOCTYPE html>
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dr Dark Forest</title>
+    <title>Dr Dark Forest Survival</title>
     <style>
-        body { margin: 0; background: #000; color: #0f0; text-align: center; font-family: sans-serif; overflow: hidden; }
-        canvas { display: block; background: #001a00; margin: 0 auto; border: 2px solid #0f0; }
-        #ui { position: fixed; top: 10px; width: 100%; font-weight: bold; }
-        .controls { position: fixed; bottom: 20px; width: 100%; display: flex; justify-content: center; gap: 15px; }
-        button { padding: 20px; font-size: 20px; background: #222; color: #0f0; border: 2px solid #0f0; border-radius: 10px; }
+        body { margin: 0; background: #051a05; color: #0f0; text-align: center; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
+        canvas { display: block; background: linear-gradient(#0a2b0a, #051405); margin: 0 auto; border-bottom: 4px solid #0f0; }
+        #ui { position: fixed; top: 10px; width: 100%; font-size: 20px; text-shadow: 2px 2px #000; z-index: 10; }
+        .controls { position: fixed; bottom: 30px; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; align-items: center; gap: 10px; padding: 10px; }
+        button { width: 70px; height: 70px; font-size: 30px; background: rgba(0,255,0,0.1); color: #0f0; border: 2px solid #0f0; border-radius: 50%; box-shadow: 0 0 10px #0f0; active { transform: scale(0.9); } }
+        .up { grid-column: 2; } .left { grid-column: 1; } .down { grid-column: 2; } .right { grid-column: 3; }
     </style>
 </head>
 <body>
-    <div id="ui">DOCTOR DARK SURVIVAL | SCORE: <span id="sc">0</span></div>
+    <div id="ui">🌲 DR DARK SURVIVAL | SCORE: <span id="sc">0</span></div>
     <canvas id="g"></canvas>
     <div class="controls">
-        <button ontouchstart="m('l')">⬅️</button>
-        <button ontouchstart="m('u')">⬆️</button>
-        <button ontouchstart="m('d')">⬇️</button>
-        <button ontouchstart="m('r')">➡️</button>
+        <button class="up" ontouchstart="m('u')">⬆️</button>
+        <button class="left" ontouchstart="m('l')">⬅️</button>
+        <button class="down" ontouchstart="m('d')">⬇️</button>
+        <button class="right" ontouchstart="m('r')">➡️</button>
     </div>
     <script>
         const c=document.getElementById('g'), x=c.getContext('2d');
-        c.width=window.innerWidth; c.height=window.innerHeight-150;
+        c.width=window.innerWidth; c.height=window.innerHeight-200;
         let p={x:c.width/2, y:c.height/2, s:0};
+        let trees = Array.from({length:15}, () => ({x:Math.random()*c.width, y:Math.random()*c.height}));
+
         function draw() {
             x.clearRect(0,0,c.width,c.height);
-            x.fillStyle='#0f0'; x.fillRect(p.x,p.y,30,30);
+            // Draw Trees
+            x.font = "30px Arial";
+            trees.forEach(t => x.fillText("🌲", t.x, t.y));
+            // Draw Player (Doctor Dark)
+            x.font = "40px Arial";
+            x.fillText("🏃‍♂️", p.x, p.y);
             requestAnimationFrame(draw);
         }
         function m(d) {
-            if(d=='l')p.x-=25; if(d=='r')p.x+=25;
-            if(d=='u')p.y-=25; if(d=='d')p.y+=25;
-            document.getElementById('sc').innerText = ++p.s;
+            if(d=='l' && p.x > 20) p.x-=30;
+            if(d=='r' && p.x < c.width-40) p.x+=30;
+            if(d=='u' && p.y > 40) p.y-=30;
+            if(d=='d' && p.y < c.height-20) p.y+=30;
+            p.s += 10;
+            document.getElementById('sc').innerText = p.s;
         }
         draw();
     </script>
