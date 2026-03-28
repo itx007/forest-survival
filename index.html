@@ -3,37 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dr Dark: Master Survival</title>
+    <title>Dr Dark: Master Survival V10</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
         * { box-sizing: border-box; touch-action: none; user-select: none; }
         body { margin: 0; background: #000; font-family: 'Orbitron', sans-serif; overflow: hidden; color: #fff; }
-        #ui { position: absolute; top: 0; width: 100%; padding: 12px; z-index: 20; text-align: center; background: rgba(0,0,0,0.85); border-bottom: 2px solid #0f0; box-shadow: 0 5px 15px rgba(0,255,0,0.2); }
-        .branding { font-size: 0.8rem; color: #0f0; text-shadow: 0 0 10px #0f0; letter-spacing: 2px; }
-        .stats { display: flex; justify-content: space-around; font-size: 1.2rem; margin: 8px 0; font-weight: bold; }
-        .hb-container { width: 220px; height: 14px; background: #111; border: 2px solid #0f0; border-radius: 7px; margin: 5px auto; overflow: hidden; }
-        #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #f00, #0f0); transition: 0.3s; }
-        canvas { display: block; width: 100%; height: 50vh; transition: transform 0.1s; }
-        .shop { background: rgba(0,0,0,0.9); padding: 12px; display: flex; justify-content: center; gap: 10px; border-top: 2px solid #0f0; }
-        .shop-btn { padding: 8px 12px; background: #000; border: 1.5px solid #0f0; color: #0f0; font-family: 'Orbitron'; font-size: 0.7rem; border-radius: 5px; cursor: pointer; }
-        .controls { position: absolute; bottom: 2%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; gap: 10px; padding: 10px; }
-        .btn { width: 65px; height: 65px; background: rgba(0,255,0,0.1); border: 2px solid #0f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #0f0; }
-        .shoot-btn { width: 85px; height: 85px; background: rgba(255,0,0,0.2); border-color: #f00; color: #f00; border-radius: 50%; font-size: 2.2rem; box-shadow: 0 0 20px #f00; }
+        #ui { position: absolute; top: 0; width: 100%; padding: 12px; z-index: 20; background: rgba(0,0,0,0.8); border-bottom: 2px solid #0f0; }
+        .branding { font-size: 0.8rem; color: #0f0; text-shadow: 0 0 8px #0f0; letter-spacing: 2px; text-transform: uppercase; }
+        .stats { display: flex; justify-content: space-around; font-size: 1.3rem; margin: 10px 0; font-weight: bold; }
+        .hb-container { width: 80%; height: 12px; background: #222; border: 1.5px solid #0f0; border-radius: 6px; margin: 0 auto; overflow: hidden; }
+        #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #f00, #0f0); transition: 0.2s; }
+        canvas { display: block; width: 100%; height: 55vh; }
+        .shop { position: relative; background: #000; padding: 10px; display: flex; justify-content: center; gap: 8px; border-top: 1px solid #0f0; z-index: 30; }
+        .shop-btn { padding: 8px 10px; background: rgba(0,255,0,0.1); border: 1.5px solid #0f0; color: #0f0; font-family: 'Orbitron'; font-size: 0.65rem; border-radius: 4px; }
+        .controls { position: absolute; bottom: 2%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px; pointer-events: none; }
+        .btn { width: 60px; height: 60px; background: rgba(0,255,0,0.15); border: 1.5px solid #0f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #0f0; pointer-events: auto; }
+        .shoot-btn { width: 80px; height: 80px; background: rgba(255,0,0,0.25); border: 2px solid #f00; color: #f00; border-radius: 50%; font-size: 2rem; box-shadow: 0 0 15px #f00; pointer-events: auto; }
         .up { grid-column: 2; } .left { grid-column: 1; } .down { grid-column: 2; } .right { grid-column: 3; } .shoot { grid-column: 2; }
     </style>
 </head>
 <body>
     <div id="ui">
-        <div class="branding">DOCTOR DARK • ULTIMATE V9</div>
+        <div class="branding">Doctor Dark • Master Survival V10</div>
         <div class="stats">
             <div>SC: <span id="sc">0</span></div>
             <div>💰: <span id="coins">0</span></div>
         </div>
         <div class="hb-container"><div id="hp"></div></div>
     </div>
-    <div style="height: 15vh;"></div>
+    <div style="height: 18vh;"></div>
     <canvas id="c"></canvas>
     <div class="shop">
+        <button class="shop-btn" onclick="buy('gun')">UPGRADE GUN (50💰)</button>
+        <button class="shop-btn" onclick="buy('nitro')">NITRO CAR (100💰)</button>
+    </div>
+    <div class="controls">
+        <div class="btn up" ontouchstart="m('u')">▲</div>
+        <div class="btn left" ontouchstart="m('l')">◀</div>
+        <div class="btn down" ontouchstart="m('d')">▼</div>
+        <div class="btn right" ontouchstart="m('r')">▶</div>
+        <div class="btn shoot-btn shoot" ontouchstart="shoot()">🔥</div>
+    </div>
+
+    <script>
+        const c=document.getElementById('c'), x=c.getContext('2d');
+        const ac = new (window.AudioContext || window.webkitAudioContext)();
+        c.width=window.innerWidth*2; c.height=(window.innerHeight*0.55)*2;
+
+        let s=0, h=100, live=true, b=null, night=false, totalCoins=0, frame=0;
+        let gunLevel=1, nitroActive=false;
+        let p={x:c.width/2, y:c.height/2};
+        let wolves=[{x:150, y:150}, {x:c.width-150, y:c.height-150}]; 
+        let f={x:c.width-300, y:c.height-300}, coin={x:550, y:550}, house={x:200, y:200}, car={x:c.width-350, y:200, drive:false};
+        let med={x:Math.random()*c.width, y:Math.random()*c.height, active:true};
+        let t=Array.from({length:10},()=>({x:Math.random()*c.width, y:Math.random()*c.height, sz:145}));
+
+        function sound(freq, type, dur) {
+            let osc = ac.createOscillator(); let g = ac.createGain();
+            osc.type = type; osc.frequency.value = freq;
+            osc.connect(g); g.connect(ac.destination);
+            osc.start(); g.gain.exponentialRampToValueAtTime(0.00001, ac.currentTime + dur);
+            osc.stop(ac.currentTime + dur);
+        }
+
+        setInterval(() => { night = !night; if(night) sound(100, 'sine', 0.6); }, 20000);
+
+        function draw() {
+            if(!live) return;
+            frame++;
+            x.fillStyle="#000"; x.fillRect(0,0,c.width,c.height);
+            let wobble = Math.sin(frame * 0.1) * 8;
+            let grad = x.createRadialGradient(p.x, p.y, 50, p.x, p.y, night?450:1100);
+            grad.addColorStop(0, night ? 'rgba(60,60,0,0.5)' : 'rgba(0,50,0,0.3)');
+            grad.addColorStop(1, '#000');
+            x.fillStyle = grad; x.fillRect(0,0,c.width,c.height);
+
+            t.forEach(i=>{ x.font=i.sz+"px serif"; x.fillText("🌲",i.x,i.y); });
+            x.font="170px serif"; x.fillText("🏠",house.x,house.y);
+            x.font="130px serif"; x.fillText("🔥",f.x,f.y + (wobble/2));
+            x.font="100px serif"; x.fillText("💰",coin.x,coin.y + wobble);
+            if(med.active){ x.font="90px serif"; x.fillText("💊",med.x,med.y - wobble); }
+            if(!car.drive) { x.font="135px serif"; x.fillText("🏎️",car.x,car.y); }
+
+            let inH = Math.sqrt((p.x-house.x-70)**2+(p.y-house.y+70)**2)<140;
+            let nearF = Math.sqrt((p.x-f.x)**2+(p.y-f.y)**2)<190;
+            if(!car.drive && Math.sqrt((p.x-car.x)**2+(p.y-car.y)**2)<120) { car.drive=true; sound(150, 'sawtooth', 0.4); }
+            if(med.active && Math.sqrt((p.x-med.x)**2+(p.y-med.y)**2)<100){ h=Math.min(100, h+35); med.active=false; sound(700, 'sine', 0.25); setTimeout(()=>med.active=true, 15000); }
+
+            wolves.forEach(w => {
+                let dx=p.x-w.x, dy=p.y-w.y, d=Math.sqrt(dx*dx+dy*dy);
+                if(!inH) { w.x+=dx/(night?35:55); w.y+=dy/(night?35:55); }
+                x.font = "135px serif"; x.fillText("🐺", w.x, w.y + wobble);
+                if(d < 115 && !inH && !nearF && !car.drive) { h-=2.5; sound(80, 'square', 0.1); }
+            });
+
+            x.font="140px serif"; x.fillText(car.drive ? "🏎️" : "🏃‍♂️", p.x, p.y + (car.drive ? 0 : wobble));
+
+            if(b) {
+                b.x+=b.vx; b.y+=b.vy; x.fillStyle=gunLevel>1 ? "#0ff" : "#f00"; 
+                x.beginPath(); x.arc(b.x,b.y,25,0,Math.PI*2); x.fill();
+                wolves.forEach((w, i) => {
+                    if(Math.sqrt((b.x-w.x)**2+(b.y-w.y)**2)<125) { 
+                        s+=5000; sound(400, 'square', 0.15);
+                        wolves[i]={x:Math.random()*c.width, y:0}; b=null; 
+                    }
+                });
+                if(b && (b.x<0||b.x>c.width||b.y<0||b.y>c.height)) b=null;
+            }
+
+            if(Math.sqrt((p.x-coin.x)**2+(p.y-coin.y)**2)<115) { 
+                totalCoins+=10; sound(900, 'sine', 0.1); coin={x:Math.random()*c.width, y:Math.random()*c.height}; 
+                document.getElementById('coins').innerText=totalCoins; 
+            }
+            if(inH && h<100) h+=0.4;
+            document.getElementById('hp').style.width=h+"%";
+            if(h<=0) { live=false; alert("GAME OVER! DR DARK SC: "+Math.floor(s/10)); location.reload(); }
+            s++; document.getElementById('sc').innerText=Math.floor(s/10);
+            requestAnimationFrame(draw);
+        }
+
+        function m(v) {
+            let sp = car.drive ? (nitroActive ? 280 : 210) : 105;
+            if(v=='u' && p.y>100) p.y-=sp; if(v=='d' && p.y<c.height-100) p.y+=sp;
+            if(v=='l' && p.x>100) p.x-=sp; if(v=='r' && p.x<c.width-100) p.x+=sp;
+        }
+
+        function buy(item) {
+            if(item=='gun' && totalCoins>=50) { gunLevel=2; totalCoins-=50; alert("LASER GUN UNLOCKED!"); }
+            if(item=='nitro' && totalCoins>=100) { nitroActive=true; totalCoins-=100; alert("NITRO CAR READY!"); }
+            document.getElementById('coins').innerText=totalCoins;
+        }
+
+        function shoot() {
+            if(car.drive) { car.drive=false; car.x=p.x+180; car.y=p.y; return; }
+            if(!b) { sound(500, 'square', 0.1); let bSpeed = gunLevel > 1 ? 4 : 7;
+                b={x:p.x, y:p.y, vx:(wolves[0].x-p.x)/bSpeed, vy:(wolves[0].y-p.y)/bSpeed};
+            }
+        }
+        draw();
+    </script>
+</body>
+</html>
         <button class="shop-btn" onclick="buy('gun')">UPGRADE GUN (50💰)</button>
         <button class="shop-btn" onclick="buy('nitro')">NITRO CAR (100💰)</button>
     </div>
