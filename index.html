@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doctor Dark: Gun Survival</title>
+    <title>Doctor Dark: Night Survival</title>
     <style>
         * { box-sizing: border-box; touch-action: none; user-select: none; }
         body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; overflow: hidden; color: #fff; }
-        #ui { position: absolute; top: 10px; width: 100%; text-align: center; z-index: 10; pointer-events: none; }
+        #ui { position: absolute; top: 10px; width: 100%; text-align: center; z-index: 20; pointer-events: none; }
         .bar-bg { width: 220px; height: 18px; background: #222; border: 2px solid #0f0; border-radius: 10px; margin: 5px auto; overflow: hidden; }
         #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #f00, #ff4500); transition: 0.2s; }
         .score { color: #0f0; font-weight: bold; font-size: 1.4rem; text-shadow: 0 0 10px #0f0; }
-        canvas { display: block; width: 100%; height: 65vh; background: #031003; border-bottom: 3px solid #0f0; }
+        canvas { display: block; width: 100%; height: 65vh; background: #010801; border-bottom: 3px solid #0f0; }
         .controls { position: absolute; bottom: 2%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; gap: 8px; padding: 0 10px; }
         .btn { width: 65px; height: 65px; background: rgba(0,255,0,0.1); border: 2px solid #0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #0f0; box-shadow: 0 0 15px rgba(0,255,0,0.4); }
         .shoot-btn { width: 80px; height: 80px; background: rgba(255,0,0,0.2); border-color: #f00; color: #f00; box-shadow: 0 0 20px rgba(255,0,0,0.5); font-size: 2rem; }
@@ -20,7 +20,7 @@
 </head>
 <body>
     <div id="ui">
-        <div class="score">SCORE: <span id="sc">0</span></div>
+        <div class="score">DR DARK | SCORE: <span id="sc">0</span></div>
         <div class="bar-bg"><div id="hp"></div></div>
     </div>
     <canvas id="c"></canvas>
@@ -34,6 +34,56 @@
     <script>
         const c=document.getElementById('c'), x=c.getContext('2d');
         c.width=window.innerWidth*2; c.height=(window.innerHeight*0.65)*2;
+        let s=0, h=100, live=true, b=null, coin={x:400, y:400};
+        let p={x:c.width/2, y:c.height/2}, w={x:50, y:50}, f={x:c.width/1.3, y:c.height/1.3};
+        let t=Array.from({length:8},()=>({x:Math.random()*c.width, y:Math.random()*c.height, sz:140}));
+
+        function draw() {
+            if(!live) return;
+            x.fillStyle="#010801"; x.fillRect(0,0,c.width,c.height);
+            
+            // Flashlight Effect
+            let grad = x.createRadialGradient(p.x, p.y, 50, p.x, p.y, 600);
+            grad.addColorStop(0, 'rgba(0,40,0,0.4)');
+            grad.addColorStop(1, 'black');
+            x.fillStyle = grad; x.fillRect(0,0,c.width,c.height);
+
+            t.forEach(i=>{ x.font=i.sz+"px serif"; x.fillText("🌲",i.x,i.y); });
+            x.font="120px serif"; x.fillText("🔥",f.x,f.y);
+            x.font="80px serif"; x.fillText("💰",coin.x,coin.y);
+
+            // Wolf Logic
+            let dx=p.x-w.x, dy=p.y-w.y, d=Math.sqrt(dx*dx+dy*dy);
+            w.x+=dx/(50-(s/2000)); w.y+=dy/(50-(s/2000));
+            x.font="110px serif"; x.fillText("🐺",w.x,w.y);
+            x.fillText("🏃‍♂️",p.x,p.y);
+
+            // Bullet & Coin Logic
+            if(b) {
+                b.x += b.vx; b.y += b.vy;
+                x.font="50px serif"; x.fillText("⏺️",b.x,b.y);
+                if(Math.sqrt((b.x-w.x)**2+(b.y-w.y)**2)<80) { s+=500; w={x:Math.random()*c.width, y:0}; b=null; }
+                else if(b.x<0||b.x>c.width||b.y<0||b.y>c.height) b=null;
+            }
+            if(Math.sqrt((p.x-coin.x)**2+(p.y-coin.y)**2)<80) { s+=1000; coin={x:Math.random()*c.width, y:Math.random()*c.height}; }
+
+            // Health
+            let fD=Math.sqrt((p.x-f.x)**2+(p.y-f.y)**2);
+            if(d<80 && fD>160) { h-=1.2; document.getElementById('hp').style.width=h+"%"; }
+            if(h<=0) { live=false; alert("GAME OVER! DR DARK SCORE: "+Math.floor(s/10)); location.reload(); }
+            s++; document.getElementById('sc').innerText=Math.floor(s/10);
+            requestAnimationFrame(draw);
+        }
+        function m(v) {
+            const st=70;
+            if(v=='u' && p.y>100) p.y-=st; if(v=='d' && p.y<c.height-100) p.y+=st;
+            if(v=='l' && p.x>100) p.x-=st; if(v=='r' && p.x<c.width-100) p.x+=st;
+        }
+        function shoot() { if(!b) b={x:p.x, y:p.y, vx:(w.x-p.x)/10, vy:(w.y-p.y)/10}; }
+        draw();
+    </script>
+</body>
+</html>
         let s=0, h=100, live=true, b=null;
         let p={x:c.width/2, y:c.height/2}, w={x:50, y:50}, f={x:c.width/1.3, y:c.height/1.3};
         let t=Array.from({length:8},()=>({x:Math.random()*c.width, y:Math.random()*c.height, sz:140}));
