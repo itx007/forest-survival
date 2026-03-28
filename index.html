@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doctor Dark: Fire Survival</title>
+    <title>Doctor Dark: Gun Survival</title>
     <style>
         * { box-sizing: border-box; touch-action: none; user-select: none; }
         body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; overflow: hidden; color: #fff; }
-        #ui { position: absolute; top: 10px; width: 100%; display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 10; }
-        .bar-bg { width: 220px; height: 18px; background: #222; border: 2px solid #0f0; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        #ui { position: absolute; top: 10px; width: 100%; text-align: center; z-index: 10; pointer-events: none; }
+        .bar-bg { width: 220px; height: 18px; background: #222; border: 2px solid #0f0; border-radius: 10px; margin: 5px auto; overflow: hidden; }
         #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #f00, #ff4500); transition: 0.2s; }
         .score { color: #0f0; font-weight: bold; font-size: 1.4rem; text-shadow: 0 0 10px #0f0; }
-        canvas { display: block; width: 100%; height: 75vh; background: #031003; border-bottom: 3px solid #0f0; }
-        .controls { position: absolute; bottom: 3%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; gap: 10px; padding: 0 20px; }
-        .btn { width: 70px; height: 70px; background: rgba(0,255,0,0.1); border: 2px solid #0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #0f0; box-shadow: 0 0 15px rgba(0,255,0,0.4); }
-        .up { grid-column: 2; } .left { grid-column: 1; } .down { grid-column: 2; } .right { grid-column: 3; }
+        canvas { display: block; width: 100%; height: 65vh; background: #031003; border-bottom: 3px solid #0f0; }
+        .controls { position: absolute; bottom: 2%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; gap: 8px; padding: 0 10px; }
+        .btn { width: 65px; height: 65px; background: rgba(0,255,0,0.1); border: 2px solid #0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #0f0; box-shadow: 0 0 15px rgba(0,255,0,0.4); }
+        .shoot-btn { width: 80px; height: 80px; background: rgba(255,0,0,0.2); border-color: #f00; color: #f00; box-shadow: 0 0 20px rgba(255,0,0,0.5); font-size: 2rem; }
+        .up { grid-column: 2; } .left { grid-column: 1; } .down { grid-column: 2; } .right { grid-column: 3; } .shoot { grid-column: 2; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -28,31 +29,40 @@
         <div class="btn left" ontouchstart="m('l')">←</div>
         <div class="btn down" ontouchstart="m('d')">↓</div>
         <div class="btn right" ontouchstart="m('r')">→</div>
+        <div class="btn shoot-btn shoot" ontouchstart="shoot()">💥</div>
     </div>
     <script>
         const c=document.getElementById('c'), x=c.getContext('2d');
-        c.width=window.innerWidth*2; c.height=(window.innerHeight*0.75)*2;
-        let s=0, h=100, live=true;
-        let p={x:c.width/2, y:c.height/2}, w={x:50, y:50}, f={x:c.width/1.5, y:c.height/1.5};
-        let t=Array.from({length:8},()=>({x:Math.random()*c.width, y:Math.random()*c.height, sz:150}));
+        c.width=window.innerWidth*2; c.height=(window.innerHeight*0.65)*2;
+        let s=0, h=100, live=true, b=null;
+        let p={x:c.width/2, y:c.height/2}, w={x:50, y:50}, f={x:c.width/1.3, y:c.height/1.3};
+        let t=Array.from({length:8},()=>({x:Math.random()*c.width, y:Math.random()*c.height, sz:140}));
 
         function draw() {
             if(!live) return;
             x.fillStyle="#031003"; x.fillRect(0,0,c.width,c.height);
-            // Draw Trees
             t.forEach(i=>{ x.font=i.sz+"px serif"; x.fillText("🌲",i.x,i.y); });
-            // Draw Campfire
-            x.font="120px serif"; x.shadowBlur=30; x.shadowColor="orange";
-            x.fillText("🔥",f.x,f.y); x.shadowBlur=0;
-            // Wolf AI
+            x.font="120px serif"; x.fillText("🔥",f.x,f.y);
+
+            // Wolf Logic
             let dx=p.x-w.x, dy=p.y-w.y, d=Math.sqrt(dx*dx+dy*dy);
-            let fDx=p.x-f.x, fDy=p.y-f.y, fD=Math.sqrt(fDx*fDx+fDy*fDy);
-            w.x+=dx/45; w.y+=dy/45;
+            w.x+=dx/50; w.y+=dy/50;
             x.font="110px serif"; x.fillText("🐺",w.x,w.y);
             x.fillText("🏃‍♂️",p.x,p.y);
-            // Damage Logic (Safe near Fire)
-            if(d<80 && fD>150) { h-=0.5; document.getElementById('hp').style.width=h+"%"; }
-            if(h<=0) { live=false; alert("GAME OVER! DOCTOR DARK SCORE: "+s); location.reload(); }
+
+            // Bullet Logic
+            if(b) {
+                b.x += b.vx; b.y += b.vy;
+                x.font="50px serif"; x.fillText("⏺️",b.x,b.y);
+                let bd=Math.sqrt((b.x-w.x)**2+(b.y-w.y)**2);
+                if(bd<80) { s+=50; w={x:Math.random()*c.width, y:0}; b=null; }
+                else if(b.x<0||b.x>c.width||b.y<0||b.y>c.height) b=null;
+            }
+
+            // Health Logic
+            let fD=Math.sqrt((p.x-f.x)**2+(p.y-f.y)**2);
+            if(d<80 && fD>160) { h-=0.8; document.getElementById('hp').style.width=h+"%"; }
+            if(h<=0) { live=false; alert("GAME OVER! SCORE: "+s); location.reload(); }
             s++; document.getElementById('sc').innerText=Math.floor(s/10);
             requestAnimationFrame(draw);
         }
@@ -60,6 +70,9 @@
             const st=60;
             if(v=='u' && p.y>100) p.y-=st; if(v=='d' && p.y<c.height-100) p.y+=st;
             if(v=='l' && p.x>100) p.x-=st; if(v=='r' && p.x<c.width-100) p.x+=st;
+        }
+        function shoot() {
+            if(!b) b={x:p.x, y:p.y, vx:(w.x-p.x)/10, vy:(w.y-p.y)/10};
         }
         draw();
     </script>
