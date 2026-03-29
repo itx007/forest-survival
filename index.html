@@ -3,37 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dr Dark: Icon Shop Edition</title>
+    <title>Dr Dark: Mega Evolution V13</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
         * { box-sizing: border-box; touch-action: none; user-select: none; }
         body { margin: 0; background: #000; font-family: 'Orbitron', sans-serif; overflow: hidden; color: #fff; }
-        #ui { position: absolute; top: 0; width: 100%; padding: 10px; z-index: 20; background: rgba(0,0,0,0.85); border-bottom: 2px solid #0f0; }
+        #ui { position: absolute; top: 0; width: 100%; padding: 10px; z-index: 20; background: rgba(0,0,0,0.8); border-bottom: 2px solid #0f0; }
         .branding { font-size: 0.7rem; color: #0f0; text-shadow: 0 0 10px #0f0; text-align: center; }
-        .stats { display: flex; justify-content: space-around; font-size: 1.2rem; margin: 5px 0; }
-        .hb-container { width: 70%; height: 10px; background: #222; border: 1px solid #0f0; border-radius: 5px; margin: 5px auto; overflow: hidden; }
-        #hp { width: 100%; height: 100%; background: linear-gradient(90deg, #f00, #0f0); transition: 0.2s; }
-        canvas { display: block; width: 100%; height: 60vh; }
+        .stats { display: flex; justify-content: space-around; font-size: 1.1rem; margin: 5px 0; }
+        .hb-container { width: 60%; height: 8px; background: #222; border: 1px solid #0f0; border-radius: 4px; margin: 5px auto; overflow: hidden; }
+        #hp { width: 100%; height: 100%; background: #0f0; transition: 0.3s; }
+        canvas { display: block; width: 100%; height: 60vh; background: #010801; }
         
-        /* Floating Side Shop Icons */
-        .side-shop { position: absolute; right: 15px; top: 30%; display: flex; flex-direction: column; gap: 20px; z-index: 40; }
-        .icon-btn { width: 60px; height: 60px; background: rgba(0,0,0,0.7); border: 2px solid #0f0; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.5rem; color: #0f0; box-shadow: 0 0 10px #0f0; cursor: pointer; }
-        .icon-price { font-size: 0.5rem; color: #ff0; font-weight: bold; }
+        .side-shop { position: absolute; right: 10px; top: 25%; display: flex; flex-direction: column; gap: 15px; z-index: 40; }
+        .icon-btn { width: 55px; height: 55px; background: rgba(0,0,0,0.8); border: 2px solid #0f0; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 0 15px #0f0; transition: 0.2s; }
+        .icon-btn:active { transform: scale(0.9); border-color: #fff; }
+        .icon-price { font-size: 0.5rem; color: #ff0; }
 
         .controls { position: absolute; bottom: 5%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px; }
-        .btn { width: 65px; height: 65px; background: rgba(0,255,0,0.1); border: 2px solid #0f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #0f0; }
-        .shoot-btn { width: 85px; height: 85px; background: rgba(255,0,0,0.2); border-color: #f00; color: #f00; border-radius: 50%; font-size: 2.2rem; box-shadow: 0 0 20px #f00; }
-        .up { grid-column: 2; } .left { grid-column: 1; } .right { grid-column: 3; } .shoot { grid-column: 2; }
+        .btn { width: 65px; height: 65px; background: rgba(0,255,0,0.1); border: 2px solid #0f0; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #0f0; }
+        .shoot-btn { width: 85px; height: 85px; background: rgba(255,0,0,0.2); border: 2px solid #f00; color: #f00; border-radius: 50%; font-size: 2rem; grid-column: 2; margin: 0 auto; box-shadow: 0 0 20px #f00; }
     </style>
 </head>
 <body>
     <div id="ui">
-        <div class="branding">DOCTOR DARK • ICON SHOP V12</div>
+        <div class="branding">DOCTOR DARK • MEGA V13</div>
         <div class="stats">
             <div>SC: <span id="sc">0</span></div>
             <div>💰: <span id="coins">0</span></div>
         </div>
         <div class="hb-container"><div id="hp"></div></div>
+    </div>
+
+    <div class="side-shop">
+        <div class="icon-btn" onclick="buy('gun')">🔫<span class="icon-price">50💰</span></div>
+        <div class="icon-btn" onclick="buy('nitro')">🏎️<span class="icon-price">100💰</span></div>
+        <div class="icon-btn" onclick="buy('shield')">🛡️<span class="icon-price">75💰</span></div>
+    </div>
+
+    <div style="height: 15vh;"></div>
+    <canvas id="c"></canvas>
+
+    <div class="controls">
+        <div class="btn" style="grid-column: 2" ontouchstart="m('u')">▲</div>
+        <div class="btn" style="grid-column: 1" ontouchstart="m('l')">◀</div>
+        <div class="btn" style="grid-column: 3" ontouchstart="m('r')">▶</div>
+        <div class="btn shoot-btn" ontouchstart="shoot()">🔥</div>
+        <div class="btn" style="grid-column: 2" ontouchstart="m('d')">▼</div>
+    </div>
+
+    <script>
+        const c=document.getElementById('c'), x=c.getContext('2d');
+        const ac = new (window.AudioContext || window.webkitAudioContext)();
+        c.width=window.innerWidth*2; c.height=(window.innerHeight*0.60)*2;
+
+        let s=0, h=100, live=true, b=null, night=false, totalCoins=0, frame=0;
+        let gunLevel=1, nitroActive=false, shieldActive=false, raining=false;
+        let p={x:c.width/2, y:c.height/2};
+        let enemies=[{x:100, y:100, t:'🐺'}, {x:c.width-100, y:c.height-100, t:'🧟'}]; 
+        let objects={f:{x:c.width-300, y:c.height-300}, coin:{x:400, y:400}, h:{x:250, y:250}, car:{x:c.width-400, y:200, d:false}};
+        let drops=Array.from({length:30},()=>({x:Math.random()*c.width, y:Math.random()*c.height, v:15+Math.random()*10}));
+
+        function sound(f, t, d) {
+            let o=ac.createOscillator(), g=ac.createGain();
+            o.type=t; o.frequency.value=f; o.connect(g); g.connect(ac.destination);
+            o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+d); o.stop(ac.currentTime+d);
+        }
+
+        setInterval(()=> { night=!night; raining=Math.random()>0.5; if(night) sound(100,'sine',0.5); }, 15000);
+
+        function draw() {
+            if(!live) return; frame++;
+            x.fillStyle="#000"; x.fillRect(0,0,c.width,c.height);
+            let wobble=Math.sin(frame*0.1)*8;
+            
+            let grad=x.createRadialGradient(p.x, p.y, 50, p.x, p.y, night?450:1100);
+            grad.addColorStop(0, night?'rgba(60,60,0,0.4)':'rgba(0,50,0,0.2)');
+            grad.addColorStop(1, '#000');
+            x.fillStyle=grad; x.fillRect(0,0,c.width,c.height);
+
+            if(raining) {
+                x.strokeStyle="rgba(100,200,255,0.4)"; x.lineWidth=2;
+                drops.forEach(d=>{ x.beginPath(); x.moveTo(d.x, d.y); x.lineTo(d.x, d.y+20); x.stroke(); d.y+=d.v; if(d.y>c.height) d.y=-20; });
+            }
+
+            x.font="170px serif"; x.fillText("🏠", objects.h.x, objects.h.y);
+            x.font="110px serif"; x.fillText("💰", objects.coin.x, objects.coin.y+wobble);
+            if(!objects.car.d) { x.font="130px serif"; x.fillText("🏎️", objects.car.x, objects.car.y); }
+
+            enemies.forEach(e => {
+                let dx=p.x-e.x, dy=p.y-e.y, dist=Math.sqrt(dx*dx+dy*dy);
+                e.x+=dx/(night?35:55); e.y+=dy/(night?35:55);
+                x.font="140px serif"; x.fillText(e.t, e.x, e.y+wobble);
+                if(dist<120 && !shieldActive && !objects.car.d) { h-=2; sound(60,'square',0.1); if(navigator.vibrate) navigator.vibrate(40); }
+            });
+
+            if(shieldActive) { x.beginPath(); x.arc(p.x+70, p.y-70, 100, 0, Math.PI*2); x.strokeStyle="#0ff"; x.lineWidth=5; x.stroke(); }
+            x.font="145px serif"; x.fillText(objects.car.d?"🏎️":"🏃‍♂️", p.x, p.y+wobble);
+
+            if(b) {
+                b.x+=b.vx; b.y+=b.vy; x.fillStyle=gunLevel>1?"#0ff":"#f00";
+                x.beginPath(); x.arc(b.x,b.y,20,0,Math.PI*2); x.fill();
+                enemies.forEach((e,i)=>{
+                    if(Math.sqrt((b.x-e.x)**2+(b.y-e.y)**2)<130) { s+=5000; sound(400,'square',0.1); enemies[i].x=Math.random()*c.width; enemies[i].y=0; b=null; }
+                });
+                if(b&&(b.x<0||b.x>c.width||b.y<0||b.y>c.height)) b=null;
+            }
+
+            if(Math.sqrt((p.x-objects.coin.x)**2+(p.y-objects.coin.y)**2)<110) { 
+                totalCoins+=10; sound(1000,'sine',0.1); objects.coin={x:Math.random()*c.width,y:Math.random()*c.height}; 
+                document.getElementById('coins').innerText=totalCoins;
+            }
+
+            document.getElementById('hp').style.width=h+"%";
+            document.getElementById('hp').style.background=h<30?"#f00":"#0f0";
+            if(h<=0) { live=false; alert("GAME OVER! SCORE: "+Math.floor(s/10)); location.reload(); }
+            s++; document.getElementById('sc').innerText=Math.floor(s/10);
+            requestAnimationFrame(draw);
+        }
+
+        function m(v) {
+            let sp=objects.car.d?(nitroActive?280:200):110;
+            if(v=='u')p.y-=sp; if(v=='d')p.y+=sp; if(v=='l')p.x-=sp; if(v=='r')p.x+=sp;
+        }
+
+        function buy(it) {
+            if(it=='gun' && totalCoins>=50) { gunLevel=2; totalCoins-=50; sound(1200,'sine',0.3); }
+            if(it=='nitro' && totalCoins>=100) { nitroActive=true; totalCoins-=100; sound(1200,'sine',0.3); }
+            if(it=='shield' && totalCoins>=75) { shieldActive=true; totalCoins-=75; sound(1500,'sine',0.4); setTimeout(()=>shieldActive=false,10000); }
+            document.getElementById('coins').innerText=totalCoins;
+        }
+
+        function shoot() {
+            if(objects.car.d) { objects.car.d=false; objects.car.x=p.x+150; return; }
+            if(!b) { sound(500,'square',0.1); let sp=gunLevel>1?5:8; b={x:p.x,y:p.y,vx:(enemies[0].x-p.x)/sp, vy:(enemies[0].y-p.y)/sp}; }
+        }
+        draw();
+    </script>
+</body>
+</html>
     </div>
 
     <div class="side-shop">
