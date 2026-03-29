@@ -3,30 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dr Dark: Survival Balance V14</title>
+    <title>Dr Dark: Pro Edition V15</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
         * { box-sizing: border-box; touch-action: none; user-select: none; }
         body { margin: 0; background: #000; font-family: 'Orbitron', sans-serif; overflow: hidden; color: #fff; }
-        #ui { position: absolute; top: 0; width: 100%; padding: 10px; z-index: 20; background: rgba(0,0,0,0.8); border-bottom: 2px solid #0f0; }
-        .branding { font-size: 0.7rem; color: #0f0; text-shadow: 0 0 10px #0f0; text-align: center; }
-        .stats { display: flex; justify-content: space-around; font-size: 1.1rem; margin: 5px 0; }
-        .hb-container { width: 60%; height: 10px; background: #222; border: 1px solid #0f0; border-radius: 5px; margin: 5px auto; overflow: hidden; }
-        #hp { width: 100%; height: 100%; background: #0f0; transition: 0.3s; }
-        canvas { display: block; width: 100%; height: 60vh; background: #010801; }
         
-        .side-shop { position: absolute; right: 10px; top: 25%; display: flex; flex-direction: column; gap: 15px; z-index: 40; }
-        .icon-btn { width: 55px; height: 55px; background: rgba(0,0,0,0.85); border: 2px solid #0f0; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 0 15px #0f0; }
-        .icon-price { font-size: 0.5rem; color: #ff0; }
+        #ui { position: absolute; top: 0; width: 100%; padding: 10px; z-index: 50; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); }
+        .branding { font-size: 0.7rem; color: #0f0; text-align: center; letter-spacing: 2px; }
+        .stats { display: flex; justify-content: space-between; padding: 5px 15px; font-size: 1rem; }
+        .hb-container { width: 80%; height: 6px; background: #222; border-radius: 3px; margin: 5px auto; overflow: hidden; }
+        #hp { width: 100%; height: 100%; background: #0f0; transition: 0.3s; }
 
-        .controls { position: absolute; bottom: 5%; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px; }
-        .btn { width: 65px; height: 65px; background: rgba(0,255,0,0.15); border: 2px solid #0f0; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #0f0; }
-        .shoot-btn { width: 85px; height: 85px; background: rgba(255,0,0,0.25); border: 2px solid #f00; color: #f00; border-radius: 50%; font-size: 2.2rem; grid-column: 2; margin: 0 auto; box-shadow: 0 0 20px #f00; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+
+        /* Floating Shop Icons - Pro Placement */
+        .side-shop { position: absolute; right: 10px; top: 20%; display: flex; flex-direction: column; gap: 12px; z-index: 60; }
+        .icon-btn { width: 45px; height: 45px; background: rgba(0,255,0,0.1); border: 1.5px solid #0f0; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 0 10px rgba(0,255,0,0.3); }
+        .icon-price { font-size: 0.4rem; color: #ff0; }
+
+        /* Pro Controller Layout */
+        .controls-container { position: absolute; bottom: 30px; width: 100%; height: 160px; pointer-events: none; z-index: 100; }
+        .joystick-zone { position: absolute; left: 20px; bottom: 0; width: 150px; height: 150px; display: grid; grid-template-columns: repeat(3, 1fr); pointer-events: auto; }
+        .action-zone { position: absolute; right: 30px; bottom: 10px; width: 100px; height: 100px; pointer-events: auto; }
+
+        .ctrl-btn { background: rgba(0,255,0,0.1); border: 1px solid rgba(0,255,0,0.4); border-radius: 12px; color: rgba(0,255,0,0.6); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+        .ctrl-btn:active { background: rgba(0,255,0,0.3); color: #fff; }
+        
+        .up { grid-column: 2; grid-row: 1; }
+        .left { grid-column: 1; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
+        .down { grid-column: 2; grid-row: 3; }
+
+        .shoot-btn { width: 90px; height: 90px; background: rgba(255,0,0,0.15); border: 2px solid #f00; border-radius: 50%; color: #f00; font-size: 2.2rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(255,0,0,0.4); }
+        .shoot-btn:active { transform: scale(0.9); background: rgba(255,0,0,0.4); }
     </style>
 </head>
 <body>
     <div id="ui">
-        <div class="branding">DOCTOR DARK • BALANCE V14</div>
+        <div class="branding">DOCTOR DARK • PRO V15</div>
         <div class="stats">
             <div>SC: <span id="sc">0</span></div>
             <div>💰: <span id="coins">0</span></div>
@@ -34,6 +49,36 @@
         <div class="hb-container"><div id="hp"></div></div>
     </div>
 
+    <div class="side-shop">
+        <div class="icon-btn" onclick="buy('gun')">🔫<span class="icon-price">50💰</span></div>
+        <div class="icon-btn" onclick="buy('nitro')">🏎️<span class="icon-price">100💰</span></div>
+        <div class="icon-btn" onclick="buy('shield')">🛡️<span class="icon-price">75💰</span></div>
+    </div>
+
+    <canvas id="c"></canvas>
+
+    <div class="controls-container">
+        <div class="joystick-zone">
+            <div class="ctrl-btn up" ontouchstart="m('u')">▲</div>
+            <div class="ctrl-btn left" ontouchstart="m('l')">◀</div>
+            <div class="ctrl-btn right" ontouchstart="m('r')">▶</div>
+            <div class="ctrl-btn down" ontouchstart="m('d')">▼</div>
+        </div>
+        <div class="action-zone">
+            <div class="shoot-btn" ontouchstart="shoot()">🔥</div>
+        </div>
+    </div>
+
+    <script>
+        const c=document.getElementById('c'), x=c.getContext('2d');
+        const ac = new (window.AudioContext || window.webkitAudioContext)();
+        c.width=window.innerWidth*2; c.height=window.innerHeight*2;
+
+        let s=0, h=100, live=true, b=null, night=false, totalCoins=0, frame=0;
+        let gunLevel=1, nitroActive=false, shieldActive=false;
+        let p={x:c.width/2, y:c.height/2};
+        let enemies=[{x:0, y:0, t:'🐺'}, {x:c.width, y:c.height, t:'🧟'}]; 
+        let objects={coin:{x:600, y:600}, h:{x:300, y:300
     <div class="side-shop">
         <div class="icon-btn" onclick="buy('gun')">🔫<span class="icon-price">50💰</span></div>
         <div class="icon-btn" onclick="buy('nitro')">🏎️<span class="icon-price">100💰</span></div>
